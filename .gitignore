@@ -1,0 +1,14 @@
+# Saídas de build
+dist/
+release/
+obj/
+src/app.ico
+
+# Baixado pelo build.ps1 (instalador oficial do ProxiFyre)
+vendor/
+
+# Configuração real com usuário/senha do proxy (use app-config.example.json como modelo)
+app-config.json
+
+# Atalhos locais
+*.lnk

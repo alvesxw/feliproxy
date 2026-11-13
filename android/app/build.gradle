@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Chave de assinatura (gerada localmente, fora do código): android/keystore.properties
+def ksProps = new Properties()
+def ksFile = rootProject.file('keystore.properties')
+if (ksFile.exists()) {
+    ksFile.withInputStream { ksProps.load(it) }
+}
+
+// Versão: arquivo VERSION na raiz do projeto (X.Y.Z). versionCode = X*10000 + Y*100 + Z.
+def appVersion = rootProject.file('../VERSION').text.trim()
+def (vMajor, vMinor, vPatch) = appVersion.tokenize('.').collect { it as int }
+
+android {
+    namespace 'com.feliproxy'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.feliproxy'
+        minSdk 26
+        targetSdk 35
+        versionCode vMajor * 10000 + vMinor * 100 + vPatch
+        versionName appVersion
+    }
+
+    signingConfigs {
+        release {
+            if (ksFile.exists()) {
+                storeFile rootProject.file(ksProps['storeFile'])
+                storePassword ksProps['storePassword']
+                keyAlias ksProps['keyAlias']
+                keyPassword ksProps['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}

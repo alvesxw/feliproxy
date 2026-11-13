@@ -1,0 +1,11 @@
+﻿FeliProxy - componentes de terceiros
+==========================================
+
+ProxiFyre 2.6.4 (instalador oficial, sem modificações)
+  Licença: GNU Affero General Public License v3.0 (AGPL-3.0)
+  Código-fonte: https://github.com/wiresock/proxifyre
+  Inclui o driver Windows Packet Filter (https://github.com/wiresock/ndisapi)
+  e o Microsoft Visual C++ Redistributable, baixados/instalados pelo próprio
+  instalador do ProxiFyre conforme as licenças deles.
+
+O FeliProxy não é afiliado ao Discord Inc. nem ao projeto ProxiFyre.

@@ -1,0 +1,15 @@
+{
+    "logLevel": "Info",
+    "bypassLan": true,
+    "proxies": [
+        {
+            "appNames": ["Discord", "DiscordPTB", "DiscordCanary"],
+            "socks5ProxyEndpoint": "203.0.113.10:31080",
+            "supportedProtocols": ["TCP", "UDP"],
+            "supportedAddressFamilies": ["IPv4"],
+            "username": "usuario",
+            "password": "senha"
+        }
+    ],
+    "excludes": []
+}

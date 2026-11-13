@@ -1,0 +1,78 @@
+# Ao subir uma tag vX.Y.Z (igual ao arquivo VERSION), compila o .exe, o instalador e
+# (se os secrets da chave Android existirem) o .apk, e publica tudo numa release do GitHub.
+#
+# Secrets opcionais para o APK (Settings > Secrets and variables > Actions):
+#   ANDROID_KEYSTORE_BASE64   conteúdo do android/release.jks em base64
+#   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Conferir versão
+        id: ver
+        shell: pwsh
+        run: |
+          $v = (Get-Content VERSION -Raw).Trim()
+          if ('${{ github.ref_type }}' -eq 'tag' -and '${{ github.ref_name }}' -ne "v$v") {
+            throw "A tag ${{ github.ref_name }} não bate com o arquivo VERSION ($v)."
+          }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Instalar Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+          }
+
+      - uses: actions/setup-java@v4
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Chave de assinatura do Android
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        shell: pwsh
+        run: |
+          [IO.File]::WriteAllBytes("android\release.jks", [Convert]::FromBase64String($env:ANDROID_KEYSTORE_BASE64))
+          @(
+            'storeFile=release.jks'
+            'storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}'
+            'keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}'
+            'keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}'
+          ) | Set-Content android\keystore.properties -Encoding ascii
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $skip = if ($env:ANDROID_KEYSTORE_BASE64) { @() } else { @('-SkipAndroid') }
+          powershell -NoProfile -ExecutionPolicy Bypass -File release.ps1 @skip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FeliProxy-${{ steps.ver.outputs.version }}
+          path: release/v${{ steps.ver.outputs.version }}/*
+
+      - name: Publicar release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: FeliProxy ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: release/v${{ steps.ver.outputs.version }}/*
